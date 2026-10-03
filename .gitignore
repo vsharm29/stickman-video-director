@@ -1,2 +1,7 @@
 .worktrees/
 venv
+.env
+output/
+__pycache__/
+*.py[cod]
+*$py.class
