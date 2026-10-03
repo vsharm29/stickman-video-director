@@ -2,6 +2,10 @@
 venv
 .env
 output/
+data/*_*
+data/**/*.mp4
+!data/sub_categories.json
+!data/topics_history.json
 __pycache__/
 *.py[cod]
-*$py.class
+*$py.class

@@ -1,0 +1,79 @@
+{
+  "niche_1_mindset": {
+    "name": "Mindset & Personal Leverage",
+    "target_ratio": 0.7,
+    "sub_categories": [
+      {
+        "name": "Mental Models",
+        "description": "First-principles thinking, inversion, circle of competence, and decision-making frameworks.",
+        "archetype_objects": ["chessboard", "funnel", "prism", "bifocal lens", "balancing scale"]
+      },
+      {
+        "name": "Friction Theory",
+        "description": "Reducing activation energy for good habits and increasing resistance for destructive impulses.",
+        "archetype_objects": ["heavy flywheel", "sticky tar pit", "greased slide", "rough sandpaper", "spring-loaded door"]
+      },
+      {
+        "name": "Cognitive Biases",
+        "description": "Blind spots, confirmation bias, hyperbolic discounting, and survivorship fallacies.",
+        "archetype_objects": ["curved carnival mirror", "blindfold", "magnet pulling compass", "fogged goggles", "shadow puppet"]
+      },
+      {
+        "name": "Sunk Cost Fallacy",
+        "description": "The emotional trap of holding onto bad investments, stale careers, or lost causes.",
+        "archetype_objects": ["leaky bucket", "heavy iron anchor", "sinking wooden raft", "worn-out shoes", "broken clock"]
+      },
+      {
+        "name": "Dopamine Regulation",
+        "description": "Escaping instant gratification loops, baseline resets, and deep focus.",
+        "archetype_objects": ["slot machine lever", "sugar trap", "overflowing glass", "flickering screen", "ticking stopwatch"]
+      },
+      {
+        "name": "Strategic Quitting",
+        "description": "The art of dropping low-yield obligations to double down on high-asymmetry opportunities.",
+        "archetype_objects": ["scissors cutting tether", "ejector seat", "shedding heavy backpack", "locked door with discarded key", "severed rope"]
+      },
+      {
+        "name": "Compounding Habits",
+        "description": "The exponential payoff of micro-actions sustained over long horizons.",
+        "archetype_objects": ["snowball rolling down hill", "domino sequence", "exponential staircase", "tiny seed cracking concrete", "hourglass with accumulating gold"]
+      }
+    ]
+  },
+  "niche_2_social": {
+    "name": "Social Dynamics & Influence",
+    "target_ratio": 0.3,
+    "sub_categories": [
+      {
+        "name": "Boundary Defense",
+        "description": "Saying no without guilt, stopping emotional contagion, and protecting personal territory.",
+        "archetype_objects": ["drawbridge", "brick wall", "protective shield", "clear glass partition", "perimeter fence"]
+      },
+      {
+        "name": "The Power of Silence",
+        "description": "Withholding instant reactions, creating productive tension, and letting others fill the void.",
+        "archetype_objects": ["sealed envelope", "soundproof glass box", "unopened chest", "still water pond", "closed padlock"]
+      },
+      {
+        "name": "Unspoken Leverage",
+        "description": "Positioning, alternatives, indifference, and the party who can walk away holding power.",
+        "archetype_objects": ["fulcrum and lever", "emergency exit door", "hidden ace card", "sturdy anchor", "steering wheel"]
+      },
+      {
+        "name": "Covert Contracts",
+        "description": "The resentment born from doing secret favors while expecting unspoken reciprocation.",
+        "archetype_objects": ["invisible chain", "unopened invoice", "double-sided ledger", "gift box with hidden bill", "sticky spiderweb"]
+      },
+      {
+        "name": "Expectation Mismatches",
+        "description": "Navigating unspoken social assumptions, baseline drift, and boundary setting.",
+        "archetype_objects": ["misaligned ruler", "unequal seesaw", "split train tracks", "warped mirror", "faulty speedometer"]
+      },
+      {
+        "name": "Social Testing",
+        "description": "Recognizing compliance probes, subtle disrespect, and maintaining frame control.",
+        "archetype_objects": ["tuning fork", "metal detector gate", "pressure gauge", "litmus paper", "tripwire"]
+      }
+    ]
+  }
+}
