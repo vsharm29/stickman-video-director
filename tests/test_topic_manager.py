@@ -108,6 +108,30 @@ def test_get_recent_exclusions_window_25():
     assert exclusions["recent_subcategories"] == [f"SubCat_{i}" for i in range(30, 35)]
 
 
+def test_get_recent_exclusions_all_time():
+    """Verify that when window_size is None, exclusions capture 100% of all-time historical titles and metaphors."""
+    dummy_history = [
+        {
+            "date": f"2026-08-{i:02d}T00:00:00",
+            "niche": "niche_1_mindset",
+            "sub_category": f"SubCat_{i}",
+            "title": f"Title_{i}",
+            "physical_metaphor": f"Metaphor_{i}",
+        }
+        for i in range(1, 60)  # 59 entries
+    ]
+
+    exclusions = get_recent_exclusions(dummy_history, window_size=None)
+
+    # All 59 titles and metaphors must be excluded, never forgotten after 25 days
+    assert len(exclusions["excluded_titles"]) == 59
+    assert len(exclusions["excluded_metaphors"]) == 59
+    assert "Title_1" in exclusions["excluded_titles"]
+    assert "Title_59" in exclusions["excluded_titles"]
+    assert "Metaphor_1" in exclusions["excluded_metaphors"]
+    assert "Metaphor_59" in exclusions["excluded_metaphors"]
+
+
 def test_record_topic_to_history(tmp_path, monkeypatch):
     """Verify that record_topic_to_history persists new entries into JSON."""
     test_history_file = tmp_path / "test_topics_history.json"

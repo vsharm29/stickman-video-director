@@ -52,16 +52,24 @@ def get_target_niche(history: List[dict]) -> str:
     return "niche_1_mindset"
 
 
-def get_recent_exclusions(history: List[dict], window_size: int = 25) -> Dict[str, List[str]]:
-    """Extract exclusion lists from rolling window history to prevent repetition.
+def get_recent_exclusions(history: List[dict], window_size: Optional[int] = None) -> Dict[str, List[str]]:
+    """Extract exclusion lists from history to prevent repetition.
+
+    Args:
+        history: List of past topic history dictionaries.
+        window_size: Optional rolling window size. If None, excludes all-time history.
 
     Returns:
         dict containing:
-        - 'excluded_titles': List of titles from the last window_size runs.
-        - 'excluded_metaphors': List of physical metaphors from the last window_size runs.
+        - 'excluded_titles': List of titles ever used (or within window_size).
+        - 'excluded_metaphors': List of physical metaphors ever used (or within window_size).
         - 'recent_subcategories': List of sub-categories from the last 5 runs to prevent clustering.
     """
-    window = history[-window_size:] if len(history) >= window_size else history
+    if window_size is not None and len(history) >= window_size:
+        window = history[-window_size:]
+    else:
+        window = history
+
     excluded_titles = [entry.get("title", "") for entry in window if entry.get("title")]
     excluded_metaphors = [entry.get("physical_metaphor", "") for entry in window if entry.get("physical_metaphor")]
 
@@ -161,10 +169,11 @@ KEY RESPONSIBILITIES:
 
 
 def generate_next_topic(model_id: Optional[str] = None) -> TopicIdea:
-    """Autonomous topic generation with 70/30 ratio scheduling and anti-repetition constraints."""
+    """Autonomous topic generation with 70/30 ratio scheduling and all-time anti-repetition constraints."""
     history = load_history()
     target_niche = get_target_niche(history)
-    exclusions = get_recent_exclusions(history, window_size=25)
+    # Use window_size=None to enforce all-time exclusions (never repeat after 25 days or ever)
+    exclusions = get_recent_exclusions(history, window_size=None)
     taxonomy = load_seed_taxonomy()
 
     niche_data = taxonomy.get(target_niche, {})
@@ -185,21 +194,37 @@ SUB-CATEGORY OPTIONS:
 - Available: {json.dumps(sub_categories, indent=2)}
 - Recommended for diversity (avoiding recent clustering): {recommended_subs}
 
-STRICT EXCLUSIONS (DO NOT REUSE):
-- Excluded Titles (Last 25 runs): {exclusions['excluded_titles']}
-- Excluded Physical Metaphors (Last 25 runs): {exclusions['excluded_metaphors']}
+STRICT ALL-TIME EXCLUSIONS (NEVER REUSE ACROSS ENTIRE LIFETIME HISTORY):
+- All Previously Used Titles: {exclusions['excluded_titles']}
+- All Previously Used Physical Metaphors: {exclusions['excluded_metaphors']}
 
 MANDATORY RULES:
 1. Niche must be exactly: "{target_niche}".
 2. Choose one specific sub_category from the available options.
-3. The physical_metaphor MUST be an inanimate, tangible physical object/mechanism that is NOT in the excluded list.
-4. The title must be punchy, curiosity-inducing, and under 12 words.
+3. The physical_metaphor MUST be a completely unique, inanimate, tangible physical object/mechanism that is NOT in the excluded list or similar to past metaphors.
+4. The title must be punchy, curiosity-inducing, under 12 words, and NEVER repeat any past title.
 5. hook_premise must highlight an unexpected contradiction or counter-intuitive truth.
 """
 
     topic_agent = create_topic_agent(model_id)
     response = topic_agent.run(prompt)
     topic_idea = parse_structured_output(response.content, TopicIdea)
+
+    # Post-generation guard: Ensure neither title nor metaphor duplicates any all-time historical record
+    past_titles_lower = {t.lower().strip() for t in exclusions['excluded_titles']}
+    past_metaphors_lower = {m.lower().strip() for m in exclusions['excluded_metaphors']}
+
+    if topic_idea.title.lower().strip() in past_titles_lower or topic_idea.physical_metaphor.lower().strip() in past_metaphors_lower:
+        retry_prompt = f"""The generated topic violated the strict anti-repetition constraint:
+- Generated Title: "{topic_idea.title}"
+- Generated Metaphor: "{topic_idea.physical_metaphor}"
+
+One or both of these matched past records in the history.
+Please generate a completely UNIQUE topic and physical metaphor that has NEVER been used before:
+{prompt}
+"""
+        retry_response = topic_agent.run(retry_prompt)
+        topic_idea = parse_structured_output(retry_response.content, TopicIdea)
 
     # Persist topic into history
     record_topic_to_history(topic_idea)
