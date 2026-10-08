@@ -63,3 +63,42 @@ def create_compiler_agent(model_id: Optional[str] = None) -> Agent:
         instructions=get_compiler_system_prompt(),
         output_schema=PhaseBOutput,
     )
+
+
+def create_production_manager_agent(model_id: Optional[str] = None) -> Agent:
+    """Create the ProductionManagerAgent responsible for orchestrating video generation, stitching, and captioning."""
+    from src.tools import (
+        generate_flow_clip,
+        stitch_clips,
+        generate_srt_file,
+        embed_captions_to_video,
+    )
+
+    primary = model_id or DEFAULT_MODEL
+    instructions = (
+        "You are the ProductionManagerAgent for Stickman Video Director.\n"
+        "Your mission is to take an approved Phase B production package and execute video production:\n"
+        "1. Clip Generation:\n"
+        "   - For each clip prompt in Phase B, call `generate_flow_clip` to produce `clip_1.mp4` through `clip_N.mp4`.\n"
+        "2. Video Stitching:\n"
+        "   - Once all clips are available in the folder, call `stitch_clips` using FFmpeg stream copy to create `stitched_raw.mp4`.\n"
+        "3. Subtitle Generation:\n"
+        "   - Call `generate_srt_file` to construct speech-synchronized subtitles (`captions.srt`) with clean punctuation.\n"
+        "4. Caption Embedding:\n"
+        "   - Call `embed_captions_to_video` to burn high-contrast vertical captions onto `stitched_raw.mp4` to output `final_published_short.mp4`.\n"
+        "5. Final Review:\n"
+        "   - Confirm the existence of all output files and provide a clear summary of paths and durations."
+    )
+    return Agent(
+        name="ProductionManagerAgent",
+        model=get_model(primary),
+        fallback_models=get_fallback_models(primary),
+        instructions=instructions,
+        tools=[
+            generate_flow_clip,
+            stitch_clips,
+            generate_srt_file,
+            embed_captions_to_video,
+        ],
+        markdown=True,
+    )

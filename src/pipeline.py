@@ -101,6 +101,7 @@ def run_director_pipeline(
     duration: int = 60,
     max_retries: int = 3,
     model_id: Optional[str] = None,
+    render_video: bool = False,
 ) -> Tuple[str, PhaseBOutput, Path]:
     """Execute the full Actor-Critic video director pipeline.
 
@@ -300,13 +301,57 @@ Each ClipPrompt must include:
     package_md_content = format_phase_b_markdown(phase_b_output)
     package_md_file.write_text(package_md_content, encoding="utf-8")
 
-    print(f"🎉 SUCCESS! Outputs saved to topic folder: {run_dir.resolve()}")
-    print(f"   - Phase A Proposal:         {proposal_file.name}")
-    print(f"   - Phase B Package Markdown: {package_md_file.name} (Contains all {len(phase_b_output.clips)} clips in 1 clean MD file)")
-    print(f"   - Phase B Prompts JSON:     {prompts_file.name} (Key-value pairs for all clips)")
-    print(f"   - Target Video Destination: clip_1.mp4 to clip_{len(phase_b_output.clips)}.mp4 (directly in this topic folder)")
+    # Phase C: Optional Full Video Production (Clips -> Stitch -> Captions)
+    if render_video:
+        run_phase_c(run_dir, phase_b_output, aspect_ratio=aspect_ratio)
 
     return phase_a_proposal, phase_b_output, run_dir
+
+
+def run_phase_c(run_dir: Path, phase_b_output: PhaseBOutput, aspect_ratio: str = "9:16") -> Path:
+    """Execute Phase C: render clips via Google Flow, concatenate, and embed synchronized captions."""
+    print("\n" + "=" * 70)
+    print("🎬 STARTING PHASE C: VIDEO RENDERING, STITCHING & CAPTIONS")
+    print("=" * 70)
+    from src.tools import generate_flow_clip, stitch_clips, generate_srt_file, embed_captions_to_video
+
+    num_clips = len(phase_b_output.clips)
+    # Step 1: Render all clips via Google Flow
+    for clip in phase_b_output.clips:
+        clip_file = run_dir / f"clip_{clip.index}.mp4"
+        if not clip_file.exists():
+            print(f"🎬 Generating clip {clip.index}/{num_clips} via Google Flow ({clip.duration_sec}s)...")
+            generate_flow_clip(
+                prompt=clip.prompt,
+                clip_index=clip.index,
+                output_dir=run_dir,
+                model="omni-flash",
+                duration=clip.duration_sec,
+                aspect_ratio=aspect_ratio,
+            )
+        else:
+            print(f"⏩ Clip {clip.index} already exists at {clip_file.name}, skipping generation.")
+
+    # Step 2: Lossless Concatenation
+    stitched_raw = run_dir / "stitched_raw.mp4"
+    print("🎬 Stitching 6 clips via FFmpeg stream copy...")
+    stitch_clips(run_dir, stitched_raw)
+
+    # Step 3: Subtitle Generation
+    captions_srt = run_dir / "captions.srt"
+    print("📄 Generating speech-synchronized punctuation-free subtitles...")
+    generate_srt_file(run_dir, captions_srt, phrase_level=True, clean_punctuation=True)
+
+    # Step 4: Caption Embedding
+    final_video = run_dir / "final_published_short.mp4"
+    print("🎬 Burning high-contrast vertical captions into final video...")
+    embed_captions_to_video(stitched_raw, captions_srt, final_video)
+
+    print("\n" + "=" * 70)
+    print(f"🎉 FULL PRODUCTION SHORT GENERATED SUCCESSFULLY!")
+    print(f"Path: {final_video.resolve()} ({final_video.stat().st_size / (1024*1024):.2f} MB)")
+    print("=" * 70 + "\n")
+    return final_video
 
 
 def format_phase_b_markdown(phase_b: PhaseBOutput) -> str:

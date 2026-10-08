@@ -9,3 +9,7 @@ data/**/*.mp4
 __pycache__/
 *.py[cod]
 *$py.class
+*.mp4
+*.srt
+/sample_data
+/scratch

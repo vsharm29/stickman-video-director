@@ -66,10 +66,36 @@ def main():
         default=None,
         help="Optional Gemini model override (defaults to GEMINI_MODEL env var)",
     )
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help="Execute full production (Phase C): render clips via Google Flow, stitch, and burn captions",
+    )
+    parser.add_argument(
+        "--from-run",
+        type=str,
+        default=None,
+        help="Path to an existing run directory (e.g. data/002_04_oct_26) to render, stitch, and caption directly.",
+    )
 
     args = parser.parse_args()
 
     try:
+        if args.from_run:
+            from_run_dir = Path(args.from_run).resolve()
+            prompts_path = from_run_dir / "phase_b_prompts.json"
+            if not prompts_path.exists():
+                raise FileNotFoundError(f"phase_b_prompts.json not found in {from_run_dir}")
+            import json
+            from src.schemas import PhaseBOutput
+            from src.pipeline import run_phase_c
+            print(f"[CLI] Resuming production from existing run package: {from_run_dir}")
+            data = json.loads(prompts_path.read_text(encoding="utf-8"))
+            phase_b_output = PhaseBOutput.model_validate(data)
+            final_video = run_phase_c(from_run_dir, phase_b_output, aspect_ratio=phase_b_output.aspect_ratio)
+            print(f"\n🎉 Production completed for {from_run_dir.name} -> {final_video}")
+            return
+
         topic_idea = None
         if args.topic:
             effective_topic = args.topic
@@ -87,6 +113,7 @@ def main():
             duration=args.duration,
             max_retries=args.retries,
             model_id=args.model,
+            render_video=args.render,
         )
 
         if topic_idea:
